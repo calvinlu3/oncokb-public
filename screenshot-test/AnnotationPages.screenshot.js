@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
-import { FALSE } from 'node-sass';
 
 const DATA_DIR = './screenshot-test/data/';
 const CLIENT_URL = 'http://localhost:9000/';
@@ -491,17 +490,6 @@ describe('Tests without login', () => {
 
   it('Alteration Page', async() => {
     await page.goto(`${CLIENT_URL}gene/TP53/Deletion`);
-    await page.setRequestInterception(true); // Handle UnhandledPromiseRejectionWarning: Error: Request Interception is not enabled!
-    page.on('request', (request) => {
-      let url = request.url()
-        request.respond(
-          {
-            status: 200,
-            contentType: 'application/json',
-            body: true
-          }
-        )
-      });
     await page.setViewport(VIEW_PORT_1080);
     await page.waitFor(WAITING_TIME);
     let image = await page.screenshot(getScreenshotConfig('Alteration Page without Login'));
@@ -510,17 +498,6 @@ describe('Tests without login', () => {
 
   it('Alteration Page', async() => {
     await page.goto(`${CLIENT_URL}gene/TP53/Deletion`);
-    await page.setRequestInterception(true); // Handle UnhandledPromiseRejectionWarning: Error: Request Interception is not enabled!
-    page.on('request', (request) => {
-      let url = request.url()
-        request.respond(
-          {
-            status: 200,
-            contentType: 'application/json',
-            body: false
-          }
-        )
-      });
     await page.setViewport(VIEW_PORT_1080);
     await page.waitFor(WAITING_TIME);
     let image = await page.screenshot(getScreenshotConfig('Alteration Page without Login'));

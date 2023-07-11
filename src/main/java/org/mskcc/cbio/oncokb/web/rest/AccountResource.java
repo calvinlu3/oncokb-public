@@ -70,9 +70,14 @@ public class AccountResource {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private CreateAssessment createAssess;
+
     private final MailService mailService;
 
     private final TokenProvider tokenProvider;
+
+    public static String RECAPTCHA_VALIDATION_ERROR = "Validation failed";
 
     public AccountResource(UserRepository userRepository, UserService userService,
                            MailService mailService, TokenProvider tokenProvider,
@@ -104,6 +109,7 @@ public class AccountResource {
      * @throws InvalidPasswordException  {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
+     * @throws ValidationException  {@code 400 (Bad Request)} if the recaptcha failed.
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -111,10 +117,9 @@ public class AccountResource {
             HttpServletRequest request) throws Exception {
         ResponseEntity<String> rs = null;
         try {
-            CreateAssessment createAssess = new CreateAssessment(applicationProperties);
             RecaptchaEnterpriseServiceClient client = createAssess.createClient();
             String recaptchaToken = createAssess.getRecaptchaToken(request);
-            rs = createAssess.createAssessment(client,recaptchaToken);
+            rs = createAssess.createAssessment(client, recaptchaToken);
         } catch (ValidationException e) {
             e.printStackTrace();
             String errorMessage = e.getMessage();
@@ -130,6 +135,8 @@ public class AccountResource {
             }
             User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
             mailService.sendActivationEmail(userMapper.userToUserDTO(user));
+        } else {
+            throw new ValidationException(RECAPTCHA_VALIDATION_ERROR);
         }
     }
 
@@ -350,12 +357,12 @@ public class AccountResource {
      *
      * @param mail the mail of the user.
      * @throws Exception
+     * @throws ValidationException  {@code 400 (Bad Request)} if the recaptcha failed.
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail, HttpServletRequest request) throws Exception {
         ResponseEntity<String> rs = null;
         try {
-            CreateAssessment createAssess = new CreateAssessment(applicationProperties);
             RecaptchaEnterpriseServiceClient client = createAssess.createClient();
             String recaptchaToken = createAssess.getRecaptchaToken(request);
             rs = createAssess.createAssessment(client,recaptchaToken);
@@ -385,6 +392,8 @@ public class AccountResource {
                 // but log that an invalid attempt has been made
                 log.warn("Password reset requested for non existing mail");
             }
+        } else {
+            throw new ValidationException(RECAPTCHA_VALIDATION_ERROR);
         }
     }
 
@@ -459,7 +468,6 @@ public class AccountResource {
     public void resendVerification(@RequestBody LoginVM loginVM, HttpServletRequest request) throws Exception {
         ResponseEntity<String> rs = null;
         try {
-            CreateAssessment createAssess = new CreateAssessment(applicationProperties);
             RecaptchaEnterpriseServiceClient client = createAssess.createClient();
             String recaptchaToken = createAssess.getRecaptchaToken(request);
             rs = createAssess.createAssessment(client,recaptchaToken);
@@ -482,6 +490,8 @@ public class AccountResource {
                     && passwordEncoder.matches(loginVM.getPassword(), userOptional.get().getPassword())) {
                 mailService.sendActivationEmail(userMapper.userToUserDTO(userOptional.get()));
             }
+        } else {
+            throw new ValidationException(RECAPTCHA_VALIDATION_ERROR);
         }
     }
 

@@ -1,7 +1,7 @@
 name: Build/Push docker image and tag the release in sentry
 on:
-  - push
-  - pull_request
+  release:
+    types: [published]
 jobs:
   main:
     # if: github.repository == 'oncokb/oncokb-public'
